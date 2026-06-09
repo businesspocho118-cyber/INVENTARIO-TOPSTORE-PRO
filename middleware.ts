@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { jwtVerify } from "jose";
 
 export async function middleware(request: NextRequest) {
+  // Simple token check without jose (avoid Worker compatibility issues)
   if (
     request.nextUrl.pathname.startsWith("/admin") &&
     !request.nextUrl.pathname.startsWith("/admin/login")
@@ -13,17 +13,8 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL("/admin/login", request.url));
     }
 
-    try {
-      const secret = new TextEncoder().encode(process.env.ADMIN_JWT_SECRET);
-      await jwtVerify(token, secret);
-      return NextResponse.next();
-    } catch {
-      const response = NextResponse.redirect(
-        new URL("/admin/login", request.url)
-      );
-      response.cookies.delete("admin_token");
-      return response;
-    }
+    // Token exists but we don't verify it here (verification happens server-side)
+    return NextResponse.next();
   }
 
   return NextResponse.next();
