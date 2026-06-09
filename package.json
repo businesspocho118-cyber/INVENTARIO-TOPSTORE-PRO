@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "cf-build": "opennextjs-cloudflare build",
+    "cf-pages": "opennextjs-cloudflare build && node -e \"const fs=require('fs');const path=require('path');const src=path.join(process.cwd(),'.open-next');const dst=path.join(process.cwd(),'.open-next-pages');fs.rmSync(dst,{recursive:true,force:true});fs.mkdirSync(path.join(dst,'_worker.js'),{recursive:true});function copyDir(s,d){fs.mkdirSync(d,{recursive:true});for(const e of fs.readdirSync(s)){const sp=path.join(s,e);const dp=path.join(d,e);if(fs.statSync(sp).isDirectory())copyDir(sp,dp);else fs.copyFileSync(sp,dp)}}copyDir(src,dst);fs.renameSync(path.join(dst,'worker.js'),path.join(dst,'_worker.js','index.js'));if(fs.existsSync(path.join(src,'assets'))){const aDst=path.join(dst,'assets');copyDir(path.join(src,'assets'),aDst)}console.log('✓ Pages output ready at .open-next-pages')\"",
     "start": "next start",
     "lint": "eslint"
   },
