@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
+export const runtime = "edge";
+
 // GET /api/admin/clients — List clients or get single client
 export async function GET(req: NextRequest) {
   try {

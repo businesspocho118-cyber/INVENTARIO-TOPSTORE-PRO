@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { createSession, getCookieOptions } from "@/lib/auth";
 
+export const runtime = "edge";
+
 const loginAttempts = new Map<string, { count: number; lockedUntil: number }>();
 
 function isRateLimited(ip: string): boolean {

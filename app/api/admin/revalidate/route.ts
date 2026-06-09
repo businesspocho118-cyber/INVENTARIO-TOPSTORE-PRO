@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
+
+export const runtime = "edge";
 
 export async function POST(req: NextRequest) {
   const token = req.headers.get("x-revalidate-token");

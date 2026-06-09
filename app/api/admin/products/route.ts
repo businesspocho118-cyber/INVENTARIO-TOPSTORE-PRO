@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { revalidateStore } from "@/lib/utils";
 
+export const runtime = "edge";
+
 function makeIntegerId() {
   return Math.floor(Date.now() % 2_000_000_000);
 }

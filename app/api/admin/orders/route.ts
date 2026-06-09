@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
+export const runtime = "edge";
+
 type OrderItemInput = {
   product_id?: string;
   variant_key?: string;

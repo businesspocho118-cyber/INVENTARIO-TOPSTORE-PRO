@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getFirstImagePath } from "@/lib/utils";
 import { Shirt, Layers, CupSoda, Search } from "lucide-react";
 
+export const runtime = "edge";
 export const dynamic = "force-dynamic";
 
 const CATEGORIES: {
