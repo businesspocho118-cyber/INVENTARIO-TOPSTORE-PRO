@@ -2,6 +2,8 @@
 import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
 
+export const runtime = "edge";
+
 export async function proxy(request: NextRequest) {
   if (
     request.nextUrl.pathname.startsWith("/admin") &&
