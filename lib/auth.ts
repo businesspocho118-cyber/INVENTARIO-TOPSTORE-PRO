@@ -1,21 +1,24 @@
 import { SignJWT, jwtVerify } from "jose";
 
-const JWT_SECRET = new TextEncoder().encode(process.env.ADMIN_JWT_SECRET!);
 const COOKIE_NAME = "admin_token";
 const SESSION_DURATION = "8h";
+
+function getJwtSecret() {
+  return new TextEncoder().encode(process.env.ADMIN_JWT_SECRET!);
+}
 
 export async function createSession(username: string): Promise<string> {
   const token = await new SignJWT({ username, role: "admin" })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime(SESSION_DURATION)
-    .sign(JWT_SECRET);
+    .sign(getJwtSecret());
   return token;
 }
 
 export async function verifySession(token: string) {
   try {
-    const { payload } = await jwtVerify(token, JWT_SECRET);
+    const { payload } = await jwtVerify(token, getJwtSecret());
     return { valid: true, payload };
   } catch {
     return { valid: false, payload: null };
