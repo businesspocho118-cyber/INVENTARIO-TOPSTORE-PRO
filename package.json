@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "cf-build": "opennextjs-cloudflare build",
-    "cf-pages": "opennextjs-cloudflare build && node -e \"const fs=require('fs'),path=require('path'),src=process.cwd()+'/.open-next',dst=process.cwd()+'/.open-next-pages';fs.rmSync(dst,{recursive:true,force:true});fs.mkdirSync(dst+'/_worker.js',{recursive:true});fs.cpSync(src+'/worker.js',dst+'/_worker.js/index.js');if(fs.existsSync(src+'/assets'))fs.cpSync(src+'/assets',dst+'/assets',{recursive:true});console.log('✓ Pages output at .open-next-pages')\"",
+    "cf-pages": "opennextjs-cloudflare build && node scripts/copy-to-pages.js",
     "start": "next start",
     "lint": "eslint"
   },
