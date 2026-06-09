@@ -1,0 +1,7 @@
+node_modules/
+.next/
+.env.local
+.env
+*.log
+nul
+tmp-test-write.txt

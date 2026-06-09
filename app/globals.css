@@ -1,0 +1,207 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-admin-bg: #0D0D0D;
+  --color-admin-surface: #1A1A1A;
+  --color-admin-surface-2: #252525;
+  --color-admin-border: #3A3A3A;
+  --color-admin-gold: #C9A84C;
+  --color-admin-gold-light: #E8C96A;
+  --color-admin-text: #F0F0EB;
+  --color-admin-text-muted: #B3B3B3;
+  --color-admin-success: #22C55E;
+  --color-admin-warning: #F59E0B;
+  --color-admin-danger: #EF4444;
+  --font-sans: var(--font-dm-sans), "DM Sans", sans-serif;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #2A2A2A #161616;
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: #161616;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: #2A2A2A;
+  border-radius: 3px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: #3A3A3A;
+}
+
+/* Admin readability helpers */
+.admin-data-card {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.015)),
+    #1A1A1A;
+  border: 1px solid #3A3A3A;
+  box-shadow: 0 18px 55px rgba(0, 0, 0, 0.28);
+}
+
+.admin-table-head {
+  background: #242424;
+}
+
+.admin-table-row {
+  background: #1A1A1A;
+}
+
+.admin-table-row:nth-child(even) {
+  background: #1F1F1F;
+}
+
+.admin-table-row:hover {
+  background: #2A2A2A;
+}
+
+.admin-field {
+  background: #252525;
+  border-color: #444;
+  color: #F0F0EB;
+}
+
+.admin-field::placeholder {
+  color: #9A9A9A;
+}
+
+.admin-workspace {
+  --color-admin-bg: #F4EBDD;
+  --color-admin-surface: #FFF9EF;
+  --color-admin-surface-2: #FFFFFF;
+  --color-admin-border: #D5C3A1;
+  --color-admin-text: #17130D;
+  --color-admin-text-muted: #5E5140;
+  background:
+    radial-gradient(circle at top left, rgba(201, 168, 76, 0.2), transparent 32rem),
+    linear-gradient(180deg, #F7F0E5 0%, #EFE3D2 100%);
+  color: var(--color-admin-text);
+}
+
+.admin-workspace .admin-data-card,
+.admin-workspace .bg-admin-surface {
+  background: #FFF9EF;
+  border-color: #D5C3A1;
+  box-shadow: 0 18px 45px rgba(55, 37, 12, 0.12);
+}
+
+.admin-workspace .bg-admin-surface-2 {
+  background: #FFFFFF;
+}
+
+.admin-workspace .admin-table-head {
+  background: #EFE1C9;
+}
+
+.admin-workspace .admin-table-row {
+  background: #FFF9EF;
+}
+
+.admin-workspace .admin-table-row:nth-child(even) {
+  background: #F8EEDA;
+}
+
+.admin-workspace .admin-table-row:hover {
+  background: #EDD8AF;
+}
+
+.admin-workspace .admin-field,
+.admin-workspace input,
+.admin-workspace textarea,
+.admin-workspace select {
+  background: #FFFFFF !important;
+  border-color: #BFA875 !important;
+  color: #17130D !important;
+}
+
+.admin-workspace input::placeholder,
+.admin-workspace textarea::placeholder {
+  color: #7A6A53 !important;
+}
+
+.admin-workspace .text-admin-text-muted {
+  color: #5E5140;
+}
+
+.admin-workspace .text-admin-text {
+  color: #17130D;
+}
+
+.admin-workspace .border-admin-border,
+.admin-workspace .border-admin-border\/50,
+.admin-workspace .border-admin-border\/70 {
+  border-color: #D5C3A1;
+}
+
+/* Animations for GSAP targets */
+.admin-page {
+  opacity: 1 !important;
+  transform: none !important;
+  will-change: auto;
+}
+
+.admin-sidebar {
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+.metric-card {
+  will-change: opacity, transform;
+}
+
+.metric-number {
+  will-change: innerText;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Toggle switch */
+.toggle-switch {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  background: #2A2A2A;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.toggle-switch.active {
+  background: #C9A84C;
+}
+
+.toggle-switch::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background: #F0F0EB;
+  border-radius: 50%;
+  transition: transform 0.2s;
+}
+
+.toggle-switch.active::after {
+  transform: translateX(20px);
+}
+
+/* Badge pulse animation for fidelidad */
+@keyframes gold-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(201, 168, 76, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(201, 168, 76, 0);
+  }
+}
+
+.badge-gold-pulse {
+  animation: gold-pulse 2s infinite;
+}
