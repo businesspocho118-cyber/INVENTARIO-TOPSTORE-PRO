@@ -70,6 +70,7 @@ export const COLOR_MAP: Record<string, string> = {
   grisoscuro: "#5E5E5E",
   rosado: "#f472b6",
   rosa: "#f472b6",
+  azulclaro: "#60a5fa",
   fucsia: "#ff00ff",
   morado: "#7c3aed",
   uva: "#8B008B",
