@@ -6,7 +6,7 @@ export const runtime = "edge";
 
 export async function POST(request: NextRequest) {
   try {
-    const { username, password } = await req.json();
+    const { username, password } = await request.json();
 
     if (!username || !password) {
       return NextResponse.json(
