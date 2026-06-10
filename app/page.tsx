@@ -281,7 +281,12 @@ function StockCard({ product }: { product: Product }) {
 }
 
 export default async function Home() {
-  const products = (await getActiveProducts()).filter(hasAvailableStock);
+  let products: Product[] = [];
+  try {
+    products = (await getActiveProducts()).filter(hasAvailableStock);
+  } catch (err) {
+    console.error("Failed to load stock:", err);
+  }
   if (products.length === 0) {
     return (
       <main className="min-h-screen bg-admin-bg text-admin-text">
