@@ -43,7 +43,6 @@ export async function POST(request: NextRequest) {
     }
 
     const token = await createSession(username);
-    clearAttempts(ip);
 
     const response = NextResponse.json({ success: true });
     const cookieOptions = getCookieOptions();
