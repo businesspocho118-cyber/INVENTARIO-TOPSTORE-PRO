@@ -4,45 +4,7 @@ import { createSession, getCookieOptions } from "@/lib/auth";
 
 export const runtime = "edge";
 
-const loginAttempts = new Map<string, { count: number; lockedUntil: number }>();
-
-function isRateLimited(ip: string): boolean {
-  const attempt = loginAttempts.get(ip);
-  if (!attempt) return false;
-  if (attempt.lockedUntil && Date.now() < attempt.lockedUntil) return true;
-  if (attempt.lockedUntil && Date.now() >= attempt.lockedUntil) {
-    loginAttempts.delete(ip);
-    return false;
-  }
-  return false;
-}
-
-function recordFailedAttempt(ip: string) {
-  const attempt = loginAttempts.get(ip) || { count: 0, lockedUntil: 0 };
-  attempt.count += 1;
-  if (attempt.count >= 5) {
-    attempt.lockedUntil = Date.now() + 5 * 60 * 1000; // 5 minutes
-  }
-  loginAttempts.set(ip, attempt);
-}
-
-function clearAttempts(ip: string) {
-  loginAttempts.delete(ip);
-}
-
-export async function POST(req: NextRequest) {
-  const ip = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "unknown";
-
-  if (isRateLimited(ip)) {
-    const attempt = loginAttempts.get(ip);
-    const remainingMs = attempt ? attempt.lockedUntil - Date.now() : 0;
-    const remainingMin = Math.ceil(remainingMs / 60000);
-    return NextResponse.json(
-      { error: `Demasiados intentos. Intenta de nuevo en ${remainingMin} minutos.` },
-      { status: 429 }
-    );
-  }
-
+export async function POST(request: NextRequest) {
   try {
     const { username, password } = await req.json();
 
@@ -65,7 +27,6 @@ export async function POST(req: NextRequest) {
     }
 
     if (username !== adminUsername) {
-      recordFailedAttempt(ip);
       return NextResponse.json(
         { error: "Credenciales incorrectas" },
         { status: 401 }
@@ -75,7 +36,6 @@ export async function POST(req: NextRequest) {
     const passwordMatch = await bcrypt.compare(password, adminPasswordHash);
 
     if (!passwordMatch) {
-      recordFailedAttempt(ip);
       return NextResponse.json(
         { error: "Credenciales incorrectas" },
         { status: 401 }
