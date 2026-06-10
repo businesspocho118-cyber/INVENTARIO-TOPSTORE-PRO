@@ -82,6 +82,7 @@ export const COLOR_MAP: Record<string, string> = {
   cafe: "#7c4a2d",
   marron: "#7c4a2d",
   cafesuave: "#b08a65",
+  camel: "#C19A6B",
   beige: "#d6b98c",
   dorado: "#d4af37",
   plateado: "#c0c0c0",

@@ -136,6 +136,7 @@ function colorToBackground(color: string) {
     cafe: "#7c4a2d",
     marron: "#7c4a2d",
     "cafe suave": "#b08a65",
+    camel: "#C19A6B",
     naranja: "#f97316",
     morado: "#7c3aed",
     lila: "#a78bfa",
