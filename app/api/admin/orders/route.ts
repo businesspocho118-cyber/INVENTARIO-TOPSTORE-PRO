@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { revalidateStore } from "@/lib/utils";
 
 export const runtime = "edge";
 
@@ -20,6 +21,14 @@ type ProductForOrder = {
   unidades: Record<string, number> | null;
 };
 
+type InventoryUpdate = {
+  productId: string;
+  originalUnits: Record<string, number>;
+  originalStock: number;
+  nextUnits: Record<string, number>;
+  nextStock: number;
+};
+
 function makeIntegerId() {
   return Math.floor(Date.now() % 2_000_000_000);
 }
@@ -27,6 +36,13 @@ function makeIntegerId() {
 function parsePrice(price: string | null | undefined) {
   const numeric = String(price || "").replace(/[^\d]/g, "");
   return Number(numeric || 0);
+}
+
+function sumUnits(units: Record<string, number>) {
+  return Object.values(units).reduce(
+    (total, quantity) => total + Math.max(0, Number(quantity || 0)),
+    0
+  );
 }
 
 function parseVariant(key: string) {
@@ -301,6 +317,30 @@ export async function POST(req: NextRequest) {
       0
     );
 
+    const inventoryUpdates: InventoryUpdate[] = Array.from(
+      productMap.values()
+    ).map((product) => {
+      const originalUnits = { ...(product.unidades || {}) };
+      const nextUnits = { ...originalUnits };
+      const productPrefix = `${product.product_id}::`;
+
+      for (const [aggregateKey, requestedQuantity] of requestedByVariant) {
+        if (!aggregateKey.startsWith(productPrefix)) continue;
+
+        const variantKey = aggregateKey.slice(productPrefix.length);
+        nextUnits[variantKey] =
+          Number(nextUnits[variantKey] || 0) - requestedQuantity;
+      }
+
+      return {
+        productId: product.product_id,
+        originalUnits,
+        originalStock: sumUnits(originalUnits),
+        nextUnits,
+        nextStock: sumUnits(nextUnits),
+      };
+    });
+
     const deliveryLabel =
       body.tipo_entrega === "retiro_tienda" ? "Retiro en tienda" : "Envío";
     const notes = [`Entrega: ${deliveryLabel}`, body.notas]
@@ -329,6 +369,55 @@ export async function POST(req: NextRequest) {
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
+
+    const appliedInventoryUpdates: InventoryUpdate[] = [];
+
+    for (const inventoryUpdate of inventoryUpdates) {
+      const { error: inventoryError } = await supabaseAdmin
+        .from("productos")
+        .update({
+          unidades: inventoryUpdate.nextUnits,
+          stock: inventoryUpdate.nextStock,
+        })
+        .eq("product_id", inventoryUpdate.productId);
+
+      if (inventoryError) {
+        const rollbackResults = await Promise.all([
+          ...appliedInventoryUpdates.map((appliedUpdate) =>
+            supabaseAdmin
+              .from("productos")
+              .update({
+                unidades: appliedUpdate.originalUnits,
+                stock: appliedUpdate.originalStock,
+              })
+              .eq("product_id", appliedUpdate.productId)
+          ),
+          supabaseAdmin.from("pedidos").delete().eq("id", data.id),
+        ]);
+
+        const rollbackFailed = rollbackResults.some(
+          (result) => result.error
+        );
+        if (rollbackFailed) {
+          console.error(
+            "Orders inventory rollback failed:",
+            rollbackResults.map((result) => result.error).filter(Boolean)
+          );
+        }
+
+        return NextResponse.json(
+          {
+            error:
+              "No se pudo descontar el inventario. El pedido fue cancelado para proteger el stock.",
+          },
+          { status: 500 }
+        );
+      }
+
+      appliedInventoryUpdates.push(inventoryUpdate);
+    }
+
+    await revalidateStore();
 
     return NextResponse.json({ order: data }, { status: 201 });
   } catch (err) {
