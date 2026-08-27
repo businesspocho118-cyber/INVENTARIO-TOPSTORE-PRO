@@ -130,7 +130,7 @@ export async function revalidateStore(): Promise<boolean> {
     const token = process.env.STORE_REVALIDATE_TOKEN;
     if (!storeUrl || !token) return false;
 
-    await fetch(`${storeUrl}/api/admin/revalidate`, {
+    const response = await fetch(`${storeUrl}/api/admin/revalidate`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -140,6 +140,12 @@ export async function revalidateStore(): Promise<boolean> {
         paths: ["/hombres", "/mujeres", "/accesorios", "/"],
       }),
     });
+
+    if (!response.ok) {
+      console.error(`[TOPSTORE] Store cache invalidation failed with status ${response.status}`);
+      return false;
+    }
+
     return true;
   } catch {
     return false;
