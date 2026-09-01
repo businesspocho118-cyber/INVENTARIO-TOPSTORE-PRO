@@ -142,6 +142,21 @@ export default function OrderForm() {
     [clients, form.cliente_id]
   );
 
+  const duplicateNewClient = useMemo(() => {
+    const name = form.cliente_nombre.trim().replace(/\s+/g, " ").toLowerCase();
+    const phone = form.cliente_telefono.trim();
+
+    if (!name && !phone) return null;
+
+    return (
+      clients.find(
+        (client) =>
+          (name && client.nombre.trim().replace(/\s+/g, " ").toLowerCase() === name) ||
+          (phone && String(client.telefono || "").trim() === phone)
+      ) || null
+    );
+  }, [clients, form.cliente_nombre, form.cliente_telefono]);
+
   const total = useMemo(
     () =>
       items.reduce(
@@ -240,6 +255,13 @@ export default function OrderForm() {
 
     if (clientMode === "new" && !form.cliente_nombre.trim()) {
       toast.error("El nombre del cliente nuevo es obligatorio");
+      return;
+    }
+
+    if (clientMode === "new" && duplicateNewClient) {
+      toast.error(
+        `El cliente ya existe: ${duplicateNewClient.nombre}. Seleccionalo como cliente existente.`
+      );
       return;
     }
 
@@ -403,6 +425,11 @@ export default function OrderForm() {
                 className="admin-field w-full rounded-lg px-4 py-3 text-sm"
                 placeholder="Teléfono"
               />
+              {duplicateNewClient && (
+                <p className="text-sm font-semibold text-admin-danger md:col-span-2">
+                  Este cliente ya existe. Cambiá a “Cliente existente” y seleccioná a {duplicateNewClient.nombre}.
+                </p>
+              )}
             </label>
           </div>
         )}

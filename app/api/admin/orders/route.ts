@@ -61,6 +61,10 @@ function parseVariant(key: string) {
   };
 }
 
+function normalizeClientName(value: string) {
+  return value.trim().replace(/\s+/g, " ");
+}
+
 // GET /api/admin/orders — List orders or get single order
 export async function GET(req: NextRequest) {
   try {
@@ -136,8 +140,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    let clienteNombre = String(body.cliente_nombre || "").trim();
+    let clienteNombre = normalizeClientName(String(body.cliente_nombre || ""));
     const telefono = String(body.cliente_telefono || "").trim();
+    let clientId: number | null = null;
+    let clientWasCreated = false;
+
+    if (!clienteNombre) {
+      return NextResponse.json(
+        { error: "El nombre del cliente es requerido" },
+        { status: 400 }
+      );
+    }
 
     if (body.cliente_id) {
       const { data: existingClient, error: clientFetchError } =
@@ -154,6 +167,7 @@ export async function POST(req: NextRequest) {
         );
       }
 
+      clientId = existingClient.id;
       clienteNombre = clienteNombre || existingClient.nombre;
 
       await supabaseAdmin
@@ -165,54 +179,30 @@ export async function POST(req: NextRequest) {
             body.metodo_pago || existingClient.ultimo_metodo_pago,
         })
         .eq("id", existingClient.id);
-    } else if (telefono) {
-      const { data: existingClient } = await supabaseAdmin
+    } else {
+      const { data: duplicateNames } = await supabaseAdmin
         .from("clientes")
-        .select("*")
-        .eq("telefono", telefono)
-        .maybeSingle();
+        .select("id,nombre,telefono")
+        .ilike("nombre", clienteNombre)
+        .limit(1);
 
-      if (existingClient) {
-        clienteNombre = clienteNombre || existingClient.nombre;
-        await supabaseAdmin
-          .from("clientes")
-          .update({
-            nombre: clienteNombre,
-            direccion: body.cliente_direccion || existingClient.direccion,
-            referencias:
-              body.cliente_referencias || existingClient.referencias,
-            ultimo_metodo_pago:
-              body.metodo_pago || existingClient.ultimo_metodo_pago,
-          })
-          .eq("id", existingClient.id);
-      } else {
-        const newClientId = makeIntegerId();
-        const { error: clientError } = await supabaseAdmin
-          .from("clientes")
-          .insert({
-            id: newClientId,
-            nombre: clienteNombre,
-            telefono,
-            direccion: body.cliente_direccion || null,
-            referencias: body.cliente_referencias || null,
-            ultimo_metodo_pago: body.metodo_pago || null,
-            compras: 0,
-          });
+      const { data: duplicateByPhone } = telefono
+        ? await supabaseAdmin
+            .from("clientes")
+            .select("id,nombre,telefono")
+            .eq("telefono", telefono)
+            .maybeSingle()
+        : { data: null };
 
-        if (clientError) {
-          return NextResponse.json(
-            { error: clientError.message },
-            { status: 400 }
-          );
-        }
+      const duplicate = duplicateNames?.[0] || duplicateByPhone;
+      if (duplicate) {
+        return NextResponse.json(
+          {
+            error: `El cliente ya existe${duplicate.nombre ? `: ${duplicate.nombre}` : ""}. Seleccioná el cliente existente para registrar la compra.`,
+          },
+          { status: 409 }
+        );
       }
-    }
-
-    if (!clienteNombre) {
-      return NextResponse.json(
-        { error: "El nombre del cliente es requerido" },
-        { status: 400 }
-      );
     }
 
     const rawItems = body.items as OrderItemInput[];
@@ -347,6 +337,24 @@ export async function POST(req: NextRequest) {
       .filter(Boolean)
       .join("\n");
 
+    if (!clientId) {
+      clientId = makeIntegerId();
+      const { error: clientError } = await supabaseAdmin.from("clientes").insert({
+        id: clientId,
+        nombre: clienteNombre,
+        telefono: telefono || null,
+        direccion: body.cliente_direccion || null,
+        referencias: body.cliente_referencias || null,
+        ultimo_metodo_pago: body.metodo_pago || null,
+        compras: 0,
+      });
+
+      if (clientError) {
+        return NextResponse.json({ error: clientError.message }, { status: 400 });
+      }
+      clientWasCreated = true;
+    }
+
     const { data, error } = await supabaseAdmin
       .from("pedidos")
       .insert({
@@ -367,7 +375,43 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (error) {
+      if (clientWasCreated) {
+        await supabaseAdmin.from("clientes").delete().eq("id", clientId);
+      }
       return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+
+    const { data: clientAfterPurchase, error: loyaltyError } = await supabaseAdmin
+      .from("clientes")
+      .select("compras")
+      .eq("id", clientId)
+      .single();
+
+    if (loyaltyError || !clientAfterPurchase) {
+      await supabaseAdmin.from("pedidos").delete().eq("id", data.id);
+      if (clientWasCreated) {
+        await supabaseAdmin.from("clientes").delete().eq("id", clientId);
+      }
+      return NextResponse.json(
+        { error: "No se pudo actualizar la fidelidad del cliente." },
+        { status: 500 }
+      );
+    }
+
+    const { error: loyaltyUpdateError } = await supabaseAdmin
+      .from("clientes")
+      .update({ compras: Number(clientAfterPurchase.compras || 0) + 1 })
+      .eq("id", clientId);
+
+    if (loyaltyUpdateError) {
+      await supabaseAdmin.from("pedidos").delete().eq("id", data.id);
+      if (clientWasCreated) {
+        await supabaseAdmin.from("clientes").delete().eq("id", clientId);
+      }
+      return NextResponse.json(
+        { error: "No se pudo actualizar la fidelidad del cliente." },
+        { status: 500 }
+      );
     }
 
     const appliedInventoryUpdates: InventoryUpdate[] = [];
@@ -393,6 +437,10 @@ export async function POST(req: NextRequest) {
               .eq("product_id", appliedUpdate.productId)
           ),
           supabaseAdmin.from("pedidos").delete().eq("id", data.id),
+          supabaseAdmin
+            .from("clientes")
+            .update({ compras: Number(clientAfterPurchase.compras || 0) })
+            .eq("id", clientId),
         ]);
 
         const rollbackFailed = rollbackResults.some(
@@ -403,6 +451,10 @@ export async function POST(req: NextRequest) {
             "Orders inventory rollback failed:",
             rollbackResults.map((result) => result.error).filter(Boolean)
           );
+        }
+
+        if (clientWasCreated) {
+          await supabaseAdmin.from("clientes").delete().eq("id", clientId);
         }
 
         return NextResponse.json(

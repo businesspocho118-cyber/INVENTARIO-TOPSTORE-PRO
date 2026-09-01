@@ -102,8 +102,8 @@ export default function ProductForm({ product, mode }: ProductFormProps) {
       // Supabase Storage: .../product-images/products/{slug}/{color}/file
       // Local: /uploads/products/{slug}/{color}/file
       // Cloudflare: .../MUJERES/Chaquetas/file (no color info)
-      const parentDir = segments.length >= 2 ? segments[segments.length - 2].toLowerCase() : "";
-      const knownColors = ["negro", "blanco", "azul", "rojo", "verde", "gris", "rosado", "rosa", "morado", "uva", "vinotinto", "burdeos", "amarillo", "naranja", "cafe", "marron", "beige", "dorado", "plateado", "multicolor", "lila", "celeste"];
+      const parentDir = slugifyColor(segments.length >= 2 ? segments[segments.length - 2] : "");
+      const knownColors = ["negro", "blanco", "azul", "rojo", "verde", "gris", "rosado", "rosa", "morado", "uva", "vinotinto", "burdeos", "amarillo", "naranja", "cafe", "marron", "beige", "dorado", "plateado", "multicolor", "lila", "celeste", "rojovioleta"];
       const colorKey = knownColors.includes(parentDir) ? parentDir : "__unassigned";
       if (!grouped[colorKey]) grouped[colorKey] = [];
       if (!grouped[colorKey].includes(url)) grouped[colorKey].push(url);
@@ -236,11 +236,11 @@ export default function ProductForm({ product, mode }: ProductFormProps) {
     if (!value) return;
     setImagePathsByColor((prev) => {
       // Try to match URL to a known color
-      const lower = value.toLowerCase();
+      const normalizedUrl = value.toLowerCase().replace(/[^a-z0-9]+/g, "");
       const matchedColor = colorList.find((c) =>
-        lower.includes(slugify(c, ""))
+        normalizedUrl.includes(slugifyColor(c))
       );
-      const key = matchedColor ? slugify(matchedColor, "sin-color") : "__unassigned";
+      const key = matchedColor ? slugifyColor(matchedColor) : "__unassigned";
       const current = prev[key] || [];
       if (current.includes(value)) return prev;
       return { ...prev, [key]: [...current, value] };
@@ -404,6 +404,16 @@ export default function ProductForm({ product, mode }: ProductFormProps) {
                 className="w-full rounded-lg border border-admin-border bg-admin-surface-2 px-4 py-2.5 text-sm text-admin-text focus:outline-none focus:border-admin-gold"
                 placeholder="Negro, Azul, Gris oscuro"
               />
+              {colorList.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-2" aria-label="Vista previa de colores">
+                  {colorList.map((color) => (
+                    <span key={color} className="inline-flex items-center gap-2 rounded-full border border-admin-border bg-admin-surface-2 px-3 py-1.5 text-xs font-medium text-admin-text">
+                      <ColorSwatch colorName={color} size={16} />
+                      {color.replace(/#[0-9a-fA-F]{3,8}/g, "").trim()}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
             <div>
               <label className="mb-1.5 block text-sm font-medium text-admin-text-muted">
@@ -489,7 +499,7 @@ export default function ProductForm({ product, mode }: ProductFormProps) {
                             <p className="text-xs text-admin-text-muted">
                               Carpeta: /uploads/products/
                               {slugify(productId, "producto")}/
-                              {slugify(color, "color")}/
+                              {slugifyColor(color) || "color"}/
                             </p>
                           </div>
                         </div>
