@@ -140,6 +140,7 @@ function colorToBackground(color: string) {
     naranja: "#f97316",
     morado: "#7c3aed",
     lila: "#a78bfa",
+    "rojo violeta": "#a10677",
     crema: "#f5edd8",
     fucsia: "#ff00ff",
     celeste: "#b3ebf2",

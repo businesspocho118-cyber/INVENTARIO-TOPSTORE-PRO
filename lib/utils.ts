@@ -75,6 +75,7 @@ export const COLOR_MAP: Record<string, string> = {
   morado: "#7c3aed",
   uva: "#8B008B",
   lila: "#a78bfa",
+  rojovioleta: "#a10677",
   vinotinto: "#7f1d1d",
   burdeos: "#7f1d1d",
   amarillo: "#facc15",
@@ -92,22 +93,22 @@ export const COLOR_MAP: Record<string, string> = {
   surtidos: "#d4af37",
 };
 
-export function getColorHex(colorName: string): string {
-  const key = colorName
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/\s+/g, "");
-  return COLOR_MAP[key] || "#d6d3d1";
-}
-
-export function slugifyColor(colorName: string): string {
+function normalizeColorName(colorName: string): string {
   return colorName
+    .replace(/#[0-9a-fA-F]{3,8}/g, "")
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]+/g, "")
     .trim();
+}
+
+export function getColorHex(colorName: string): string {
+  return COLOR_MAP[normalizeColorName(colorName)] || "#d6d3d1";
+}
+
+export function slugifyColor(colorName: string): string {
+  return normalizeColorName(colorName);
 }
 
 export function getAllImagePaths(

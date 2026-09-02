@@ -55,7 +55,8 @@ export async function POST(req: NextRequest) {
       String(formData.get("product_id") || ""),
       "sin-producto"
     );
-    const color = slugify(String(formData.get("color") || ""), "sin-color");
+    const rawColor = String(formData.get("color") || "").replace(/#[0-9a-fA-F]{3,8}/g, "");
+    const color = slugify(rawColor, "sin-color");
 
     if (!(file instanceof File)) {
       return NextResponse.json(

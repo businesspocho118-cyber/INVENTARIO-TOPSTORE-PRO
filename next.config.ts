@@ -1,19 +1,21 @@
 import type { NextConfig } from "next";
 import { setupDevPlatform } from "@cloudflare/next-on-pages/next-dev";
 
-if (process.env.NODE_ENV === "development") {
-  await setupDevPlatform();
-}
+const nextConfig = async (): Promise<NextConfig> => {
+  if (process.env.NODE_ENV === "development") {
+    await setupDevPlatform();
+  }
 
-const nextConfig: NextConfig = {
-  images: {
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "**",
-      },
-    ],
-  },
+  return {
+    images: {
+      remotePatterns: [
+        {
+          protocol: "https",
+          hostname: "**",
+        },
+      ],
+    },
+  };
 };
 
 export default nextConfig;
