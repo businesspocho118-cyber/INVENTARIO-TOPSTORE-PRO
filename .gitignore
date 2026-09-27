@@ -5,3 +5,4 @@ node_modules/
 *.log
 nul
 tmp-test-write.txt
+.wrangler/
