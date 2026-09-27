@@ -121,6 +121,7 @@ function colorToBackground(color: string) {
     "gris claro": "#D3D3D3",
     "gris oscuro": "#5E5E5E",
     azul: "#2563eb",
+    "azul marino": "#1e3a5f",
     "azul claro": "#60a5fa",
     "azul oscuro": "#1e3a8a",
     rojo: "#dc2626",
@@ -242,7 +243,7 @@ function StockCard({ product }: { product: Product }) {
         </div>
 
         <div className="rounded-xl border border-admin-border bg-admin-bg/50 p-3">
-          <div className="mb-2 grid grid-cols-[1.2fr_0.8fr_0.8fr] gap-2 text-[11px] font-bold uppercase tracking-wide text-admin-text-muted">
+          <div className="mb-2 grid grid-cols-[1.5fr_0.7fr_0.8fr] gap-2 text-[11px] font-bold uppercase tracking-wide text-admin-text-muted">
             <span>Color</span>
             <span>Talla</span>
             <span className="text-right">Unidades</span>
@@ -251,15 +252,18 @@ function StockCard({ product }: { product: Product }) {
             {variants.map((variant) => (
               <div
                 key={variant.key}
-                className="grid grid-cols-[1.2fr_0.8fr_0.8fr] gap-2 rounded-lg bg-admin-surface px-3 py-2 text-sm"
+                className="grid grid-cols-[1.5fr_0.7fr_0.8fr] items-center gap-2 rounded-lg bg-admin-surface px-3 py-2 text-sm"
               >
-                <span className="flex items-center">
+                <span className="flex min-w-0 items-center gap-2">
                   <span
                     aria-label={variant.color}
                     title={variant.color}
-                    className="inline-block h-6 w-6 rounded-full border border-admin-border shadow-sm ring-2 ring-white/70"
+                    className="inline-block h-5 w-5 shrink-0 rounded-full border border-admin-border shadow-sm ring-2 ring-white/70"
                     style={{ background: colorToBackground(variant.color) }}
                   />
+                  <span className="truncate font-medium text-admin-text text-xs" title={variant.color.replace(/#[0-9a-fA-F]{3,8}/g, "").trim()}>
+                    {variant.color.replace(/#[0-9a-fA-F]{3,8}/g, "").trim()}
+                  </span>
                 </span>
                 <span className="font-medium uppercase text-admin-text-muted">
                   {variant.talla}
