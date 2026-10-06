@@ -5,6 +5,7 @@ import type { FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import type { Cliente, Producto } from "@/types/database.types";
+import { isProductBajoPedido } from "@/lib/utils";
 
 type ClientMode = "existing" | "new";
 type DeliveryType = "envio" | "retiro_tienda";
@@ -593,7 +594,7 @@ export default function OrderForm() {
                     </option>
                     {variants.map((variant) => (
                       <option key={variant.key} value={variant.key}>
-                        {variant.color} / {variant.talla} — {variant.units} und.
+                        {variant.color} / {variant.talla} — {isProductBajoPedido(selectedProduct) ? "Bajo pedido" : `${variant.units} und.`}
                       </option>
                     ))}
                   </select>

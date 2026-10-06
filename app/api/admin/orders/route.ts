@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { revalidateStore } from "@/lib/utils";
+import { revalidateStore, isProductBajoPedido } from "@/lib/utils";
 
 export const runtime = "edge";
 
@@ -219,7 +219,7 @@ export async function POST(req: NextRequest) {
 
     const { data: products, error: productsError } = await supabaseAdmin
       .from("productos")
-      .select("product_id,nombre,precio,activo,unidades")
+      .select("product_id,nombre,precio,activo,unidades,categoria")
       .in("product_id", Array.from(new Set(productIds)));
 
     if (productsError) {

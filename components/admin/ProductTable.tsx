@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import toast from "react-hot-toast";
-import { getFirstImagePath } from "@/lib/utils";
+import { getFirstImagePath, isProductBajoPedido } from "@/lib/utils";
 import type { Producto } from "@/types/database.types";
 
 export default function ProductTable() {
@@ -308,13 +308,33 @@ export default function ProductTable() {
                       {product.precio}
                     </td>
                     <td className="px-4 py-3">
-                      <span
-                        className={`${stockColor(product.stock)} ${stockBg(
-                          product.stock
-                        )} px-2 py-1 rounded-md text-xs font-semibold`}
-                      >
-                        {product.stock}
-                      </span>
+                      {isProductBajoPedido(product) ? (
+                        product.stock > 0 && product.activo ? (
+                          <span
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-sm"
+                            title="Oferta con stock disponible para pedir"
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                            Disponible
+                          </span>
+                        ) : (
+                          <span
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-admin-danger/10 text-admin-danger border border-admin-danger/20 shadow-sm"
+                            title="Oferta marcada como no disponible (agotada)"
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full bg-admin-danger" />
+                            No disponible
+                          </span>
+                        )
+                      ) : (
+                        <span
+                          className={`${stockColor(product.stock)} ${stockBg(
+                            product.stock
+                          )} px-2 py-1 rounded-md text-xs font-semibold`}
+                        >
+                          {product.stock}
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       <button
