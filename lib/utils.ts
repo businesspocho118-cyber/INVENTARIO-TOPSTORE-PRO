@@ -174,3 +174,27 @@ export async function revalidateStore(): Promise<boolean> {
     return false;
   }
 }
+
+export function isProductBajoPedido(product?: {
+  bajo_pedido?: boolean | null;
+  nombre?: string | null;
+  categoria?: string | null;
+  product_id?: string | null;
+} | null): boolean {
+  if (!product) return false;
+  if (product.bajo_pedido === true) return true;
+  if (product.bajo_pedido === false) return false;
+
+  const text = `${product.categoria || ""} ${product.nombre || ""} ${product.product_id || ""}`.toLowerCase();
+  return (
+    text.includes("pack") ||
+    text.includes("combo") ||
+    text.includes("kit") ||
+    text.includes("oferta") ||
+    text.includes("set") ||
+    text.includes("+") ||
+    text.includes("2x1") ||
+    text.includes("3x1")
+  );
+}
+

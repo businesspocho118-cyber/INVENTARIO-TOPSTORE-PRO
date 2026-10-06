@@ -12,6 +12,7 @@ export interface Producto {
   activo: boolean;
   tallas: string | null;
   unidades: Record<string, number>;
+  bajo_pedido?: boolean;
   created_at: string;
   updated_at: string;
 }

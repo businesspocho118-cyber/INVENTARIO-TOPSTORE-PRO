@@ -40,6 +40,7 @@ type Product = {
   tallas: string | null;
   colores: string | null;
   unidades: Record<string, number> | null;
+  bajo_pedido?: boolean | null;
 };
 
 type StockVariant = {
@@ -91,7 +92,15 @@ function getVariants(product: Product) {
   ];
 }
 
+function isOfertaPack(p: Product): boolean {
+  if (p.bajo_pedido === true) return true;
+  if (p.bajo_pedido === false) return false;
+  const text = `${p.categoria || ""} ${p.nombre} ${p.product_id}`.toLowerCase();
+  return ["pack", "combo", "kit", "set", "oferta", "+", "2x1", "3x1"].some((kw) => text.includes(kw));
+}
+
 function hasAvailableStock(product: Product) {
+  if (isOfertaPack(product)) return true;
   return getVariants(product).length > 0;
 }
 
@@ -211,10 +220,11 @@ async function getActiveProducts() {
 }
 
 function StockCard({ product }: { product: Product }) {
+  const isOferta = isOfertaPack(product);
   const image = getFirstImagePath(product.image_paths);
   const variants = getVariants(product);
   const availableUnits = variants.reduce((sum, item) => sum + item.units, 0);
-  const soldOut = availableUnits <= 0;
+  const soldOut = !isOferta && availableUnits <= 0;
 
   return (
     <article className="overflow-hidden rounded-2xl border border-admin-border bg-admin-surface shadow-sm transition hover:-translate-y-1 hover:border-admin-gold/60">
@@ -254,51 +264,68 @@ function StockCard({ product }: { product: Product }) {
             <p className="text-xl font-black text-admin-gold">
               {product.precio}
             </p>
-            <p className="rounded-full bg-admin-surface-2 px-3 py-1 text-sm font-bold text-admin-text">
-              {availableUnits} und.
-            </p>
+            {isOferta ? (
+              <span className="rounded-full bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 text-xs font-bold text-emerald-400">
+                Oferta activa
+              </span>
+            ) : (
+              <p className="rounded-full bg-admin-surface-2 px-3 py-1 text-sm font-bold text-admin-text">
+                {availableUnits} und.
+              </p>
+            )}
           </div>
         </div>
 
-        <div className="rounded-xl border border-admin-border bg-admin-bg/50 p-2.5">
-          <div className="mb-2 grid grid-cols-[1fr_38px_44px] items-center gap-1 text-[11px] font-bold uppercase tracking-wide text-admin-text-muted">
-            <span className="pl-1">Color</span>
-            <span className="text-center">Talla</span>
-            <span className="text-right pr-1">Unid.</span>
+        {isOferta ? (
+          <div className="rounded-xl border border-admin-border bg-admin-bg/50 p-3 text-center">
+            <p className="text-xs font-bold text-admin-gold">
+              ✨ Producto bajo pedido
+            </p>
+            <p className="mt-0.5 text-[11px] text-admin-text-muted">
+              Disponible para pedir · Sin restricción de stock
+            </p>
           </div>
-          <div className="max-h-44 space-y-1.5 overflow-auto pr-0.5">
-            {variants.map((variant) => (
-              <div
-                key={variant.key}
-                className="grid grid-cols-[1fr_38px_44px] items-center gap-1 rounded-lg bg-admin-surface px-2.5 py-2 text-sm"
-              >
-                <span className="flex min-w-0 items-center gap-2">
-                  <span
-                    aria-label={variant.color}
-                    title={variant.color}
-                    className="inline-block h-4 w-4 shrink-0 rounded-full border border-admin-border shadow-sm ring-1 ring-white/60"
-                    style={{ background: colorToBackground(variant.color) }}
-                  />
-                  <span className="truncate font-medium text-admin-text text-xs leading-none" title={variant.color.replace(/#[0-9a-fA-F]{3,8}/g, "").trim()}>
-                    {variant.color.replace(/#[0-9a-fA-F]{3,8}/g, "").trim()}
-                  </span>
-                </span>
-                <span className="text-center font-medium uppercase text-admin-text-muted text-xs">
-                  {variant.talla}
-                </span>
-                <span
-                  className={`text-right pr-1 font-black text-xs ${
-                    variant.units > 0
-                      ? "text-admin-success"
-                      : "text-admin-danger"
-                  }`}
+        ) : (
+          <div className="rounded-xl border border-admin-border bg-admin-bg/50 p-2.5">
+            <div className="mb-2 grid grid-cols-[1fr_38px_44px] items-center gap-1 text-[11px] font-bold uppercase tracking-wide text-admin-text-muted">
+              <span className="pl-1">Color</span>
+              <span className="text-center">Talla</span>
+              <span className="text-right pr-1">Unid.</span>
+            </div>
+            <div className="max-h-44 space-y-1.5 overflow-auto pr-0.5">
+              {variants.map((variant) => (
+                <div
+                  key={variant.key}
+                  className="grid grid-cols-[1fr_38px_44px] items-center gap-1 rounded-lg bg-admin-surface px-2.5 py-2 text-sm"
                 >
-                  {variant.units}
-                </span>
-              </div>
-            ))}
+                  <span className="flex min-w-0 items-center gap-2">
+                    <span
+                      aria-label={variant.color}
+                      title={variant.color}
+                      className="inline-block h-4 w-4 shrink-0 rounded-full border border-admin-border shadow-sm ring-1 ring-white/60"
+                      style={{ background: colorToBackground(variant.color) }}
+                    />
+                    <span className="truncate font-medium text-admin-text text-xs leading-none" title={variant.color.replace(/#[0-9a-fA-F]{3,8}/g, "").trim()}>
+                      {variant.color.replace(/#[0-9a-fA-F]{3,8}/g, "").trim()}
+                    </span>
+                  </span>
+                  <span className="text-center font-medium uppercase text-admin-text-muted text-xs">
+                    {variant.talla}
+                  </span>
+                  <span
+                    className={`text-right pr-1 font-black text-xs ${
+                      variant.units > 0
+                        ? "text-admin-success"
+                        : "text-admin-danger"
+                    }`}
+                  >
+                    {variant.units}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </article>
   );

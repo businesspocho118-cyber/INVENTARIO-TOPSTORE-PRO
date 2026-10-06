@@ -382,6 +382,6 @@ async function getDashboardData() {
     },
     recentOrders: recentOrders.data || [],
     chartData: chart,
-    lowStockProducts: lowStock.data || [],
+    lowStockProducts: (lowStock.data || []).filter((p) => !isOfertaPack(p)),
   });
 }

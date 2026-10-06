@@ -10,7 +10,7 @@ import { z } from "zod";
 import toast from "react-hot-toast";
 import UnidadesEditor from "./UnidadesEditor";
 import { ColorSwatch } from "./ColorSwatch";
-import { slugifyColor } from "@/lib/utils";
+import { slugifyColor, isProductBajoPedido } from "@/lib/utils";
 import type { Producto } from "@/types/database.types";
 
 const productSchema = z.object({
@@ -30,6 +30,7 @@ const productSchema = z.object({
   tallas: z.string().optional(),
   stock: z.number().int().min(0),
   activo: z.boolean(),
+  bajo_pedido: z.boolean(),
 });
 
 type ProductFormData = z.infer<typeof productSchema>;
@@ -143,6 +144,7 @@ export default function ProductForm({ product, mode }: ProductFormProps) {
           tallas: product.tallas || "",
           stock: product.stock,
           activo: product.activo,
+          bajo_pedido: product.bajo_pedido ?? isProductBajoPedido(product),
         }
       : {
           product_id: "",
@@ -155,6 +157,7 @@ export default function ProductForm({ product, mode }: ProductFormProps) {
           tallas: "",
           stock: 0,
           activo: true,
+          bajo_pedido: false,
         },
   });
 
@@ -162,7 +165,22 @@ export default function ProductForm({ product, mode }: ProductFormProps) {
   const productId = useWatch({ control, name: "product_id" }) || "";
   const colores = useWatch({ control, name: "colores" }) || "";
   const tallas = useWatch({ control, name: "tallas" }) || "";
+  const categoria = useWatch({ control, name: "categoria" }) || "";
   const activo = useWatch({ control, name: "activo" });
+  const bajoPedido = useWatch({ control, name: "bajo_pedido" }) ?? false;
+
+  const isOferta = useMemo(() => {
+    if (bajoPedido) return true;
+    const cat = categoria.toLowerCase();
+    if (cat.includes("oferta") || cat.includes("pack") || cat.includes("combo")) return true;
+    if (product && isProductBajoPedido(product)) return true;
+    return false;
+  }, [bajoPedido, categoria, product]);
+
+  const [stockDisponible, setStockDisponible] = useState<boolean>(() => {
+    if (product && Number(product.stock) === 0) return false;
+    return true;
+  });
   const colorList = useMemo(() => parseCsv(colores), [colores]);
   const visibleUnidades = useMemo(
     () => sanitizeUnits(colores, tallas, unidades),
@@ -177,8 +195,12 @@ export default function ProductForm({ product, mode }: ProductFormProps) {
   }, [nombre, mode, setValue]);
 
   useEffect(() => {
-    setValue("stock", stockTotal);
-  }, [setValue, stockTotal]);
+    if (isOferta) {
+      setValue("stock", stockDisponible ? 999 : 0);
+    } else {
+      setValue("stock", stockTotal);
+    }
+  }, [setValue, stockTotal, isOferta, stockDisponible]);
 
   const getColorImages = (color: string) => {
     const colorSlug = slugifyColor(color);
@@ -276,11 +298,31 @@ export default function ProductForm({ product, mode }: ProductFormProps) {
 
     setSaving(true);
     try {
+      const isBajo = isOferta;
+      let unitsPayload = visibleUnidades;
+
+      if (isBajo) {
+        unitsPayload = {};
+        const targetQty = stockDisponible ? 999 : 0;
+        const cList = colorList.length ? colorList : ["Variado"];
+        const tList = parseCsv(tallas).length ? parseCsv(tallas) : ["UNICA"];
+
+        for (const c of cList) {
+          for (const t of tList) {
+            unitsPayload[`${c}-${t}`] = targetQty;
+          }
+        }
+        if (Object.keys(unitsPayload).length === 0) {
+          unitsPayload = { general: targetQty };
+        }
+      }
+
       const payload = {
         ...data,
-        stock: stockTotal,
+        bajo_pedido: isBajo,
+        stock: isBajo ? (stockDisponible ? 999 : 0) : stockTotal,
         image_paths: imagePathsByColor,
-        unidades: visibleUnidades,
+        unidades: unitsPayload,
       };
 
       const res = await fetch("/api/admin/products", {
@@ -449,20 +491,85 @@ export default function ProductForm({ product, mode }: ProductFormProps) {
             </div>
           </div>
 
+          {/* Control de Stock para Ofertas / Normal */}
+          {isOferta ? (
+            <div className="rounded-xl border border-admin-border bg-admin-surface-2 p-4 space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-bold text-admin-text">
+                    Disponibilidad de la Oferta (Stock)
+                  </p>
+                  <p className="text-xs text-admin-text-muted mt-0.5">
+                    Las ofertas no usan números de stock. Marcá si está disponible o agotada:
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStockDisponible(true);
+                      setValue("stock", 999);
+                    }}
+                    className={`px-4 py-2 rounded-lg text-xs font-bold transition ${
+                      stockDisponible
+                        ? "bg-emerald-500 text-white shadow-md ring-2 ring-emerald-400/40"
+                        : "bg-admin-bg border border-admin-border text-admin-text-muted hover:text-admin-text"
+                    }`}
+                  >
+                    🟢 Disponible
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStockDisponible(false);
+                      setValue("stock", 0);
+                    }}
+                    className={`px-4 py-2 rounded-lg text-xs font-bold transition ${
+                      !stockDisponible
+                        ? "bg-admin-danger text-white shadow-md ring-2 ring-red-400/40"
+                        : "bg-admin-bg border border-admin-border text-admin-text-muted hover:text-admin-text"
+                    }`}
+                  >
+                    🔴 No disponible (Agotado)
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between border-t border-admin-border/50 pt-2 text-xs">
+                <span className="text-admin-text-muted">Estado en la tienda:</span>
+                <span className={`font-bold ${stockDisponible ? "text-emerald-400" : "text-admin-danger"}`}>
+                  {stockDisponible ? "✨ Disponible para compra" : "⚠️ Aparecerá como Agotado"}
+                </span>
+              </div>
+            </div>
+          ) : null}
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="mb-1.5 block text-sm font-medium text-admin-text-muted">
-                Stock total (automático)
+                {isOferta ? "Estado de Stock" : "Stock total (automático)"}
               </label>
-              <input
-                {...register("stock", { valueAsNumber: true })}
-                type="number"
-                min="0"
-                readOnly
-                className="w-full rounded-lg border border-admin-border bg-admin-surface-2 px-4 py-2.5 text-sm text-admin-text focus:outline-none focus:border-admin-gold"
-              />
+              {isOferta ? (
+                <div className={`w-full rounded-lg px-4 py-2.5 text-sm font-bold border ${
+                  stockDisponible
+                    ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
+                    : "border-admin-danger/30 bg-admin-danger/10 text-admin-danger"
+                }`}>
+                  {stockDisponible ? "🟢 Disponible" : "🔴 No disponible (Agotado)"}
+                </div>
+              ) : (
+                <input
+                  {...register("stock", { valueAsNumber: true })}
+                  type="number"
+                  min="0"
+                  readOnly
+                  className="w-full rounded-lg border border-admin-border bg-admin-surface-2 px-4 py-2.5 text-sm text-admin-text focus:outline-none focus:border-admin-gold"
+                />
+              )}
               <p className="mt-1 text-xs text-admin-text-muted">
-                Se calcula desde Color + Talla; no se edita aparte.
+                {isOferta
+                  ? "Las ofertas no usan números de stock; se manejan como Disponible o Agotado."
+                  : "Se calcula desde Color + Talla; no se edita aparte."}
               </p>
             </div>
             <div>
@@ -606,12 +713,26 @@ export default function ProductForm({ product, mode }: ProductFormProps) {
           </div>
 
           <div>
-            <UnidadesEditor
-              colores={colores}
-              tallas={tallas}
-              unidades={visibleUnidades}
-              onChange={setUnidades}
-            />
+            {isOferta ? (
+              <div className="rounded-xl border border-admin-border bg-admin-surface-2 p-5 text-center">
+                <p className="text-sm font-bold text-admin-gold">
+                  ✨ Oferta sin control de inventario por números
+                </p>
+                <p className="text-xs text-admin-text-muted mt-1 max-w-md mx-auto">
+                  No requieres cargar cantidades numéricas a cada combinación de talla o color. Su stock se controla directamente con los botones de{" "}
+                  <strong className={stockDisponible ? "text-emerald-400" : "text-admin-danger"}>
+                    {stockDisponible ? "Disponible" : "No disponible (Agotado)"}
+                  </strong>.
+                </p>
+              </div>
+            ) : (
+              <UnidadesEditor
+                colores={colores}
+                tallas={tallas}
+                unidades={visibleUnidades}
+                onChange={setUnidades}
+              />
+            )}
           </div>
         </div>
       </div>
