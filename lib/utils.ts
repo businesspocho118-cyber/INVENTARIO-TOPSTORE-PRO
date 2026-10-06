@@ -91,7 +91,29 @@ export const COLOR_MAP: Record<string, string> = {
   packde3: "#e879a6",
   multicolor: "#d4af37",
   surtidos: "#d4af37",
+  variado: "#f43f5e",
+  variados: "#f43f5e",
+  arcoiris: "#38bdf8",
 };
+
+export const RAINBOW_GRADIENT =
+  "conic-gradient(from 180deg at 50% 50%, #ff2a2a 0deg, #ff7a00 50deg, #ffd000 100deg, #00c853 160deg, #00b0ff 220deg, #7c4dff 280deg, #ff4081 330deg, #ff2a2a 360deg)";
+
+export function isRainbowColor(colorName: string): boolean {
+  if (!colorName) return false;
+  const normalized = normalizeColorName(colorName);
+  return [
+    "variado",
+    "variados",
+    "multicolor",
+    "surtido",
+    "surtidos",
+    "arcoiris",
+    "rainbow",
+    "mixto",
+    "mixtos",
+  ].includes(normalized);
+}
 
 function normalizeColorName(colorName: string): string {
   return colorName

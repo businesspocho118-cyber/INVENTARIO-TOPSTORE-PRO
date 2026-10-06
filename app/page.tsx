@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getFirstImagePath } from "@/lib/utils";
-import { Shirt, Layers, CupSoda, Search } from "lucide-react";
+import { Shirt, Layers, CupSoda, Search, Sparkles, Tag } from "lucide-react";
 
 export const runtime = "edge";
 export const dynamic = "force-dynamic";
@@ -13,7 +13,9 @@ const CATEGORIES: {
   keywords: string[];
   badge: string;
 }[] = [
-{ icon: Shirt, label: "Camisas", keywords: ["camisa", "camiseta", "sin manga", "tirante", "workout", "alpha", "manga"], badge: "bg-blue-500/10 text-blue-400 border-blue-500/20" },
+  { icon: Tag, label: "Ofertas y Packs", keywords: ["pack", "combo", "kit", "set", "oferta", "ofertas", "2x1", "3x1"], badge: "bg-amber-500/10 text-amber-400 border-amber-500/20" },
+  { icon: Sparkles, label: "Cosmética", keywords: ["cosmetica", "esponja", "esponjas", "moña", "mona", "moñas", "monas", "cosmetiquera", "cosmetiqueras", "belleza"], badge: "bg-pink-500/10 text-pink-400 border-pink-500/20" },
+  { icon: Shirt, label: "Camisas", keywords: ["camisa", "camiseta", "sin manga", "tirante", "workout", "alpha", "manga"], badge: "bg-blue-500/10 text-blue-400 border-blue-500/20" },
   { icon: Layers, label: "Conjuntos", keywords: ["conjunto"], badge: "bg-violet-500/10 text-violet-400 border-violet-500/20" },
   { icon: Search, label: "Shorts", keywords: ["short", "pantaloneta"], badge: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" },
   { icon: Shirt, label: "Enterizos", keywords: ["enterizo"], badge: "bg-pink-500/10 text-pink-400 border-pink-500/20" },
@@ -113,6 +115,22 @@ function colorToBackground(color: string) {
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[-_]+/g, " ")
     .trim();
+
+  if (
+    [
+      "variado",
+      "variados",
+      "multicolor",
+      "surtido",
+      "surtidos",
+      "arcoiris",
+      "rainbow",
+      "mixto",
+      "mixtos",
+    ].includes(normalized)
+  ) {
+    return "conic-gradient(from 180deg at 50% 50%, #ff2a2a 0deg, #ff7a00 50deg, #ffd000 100deg, #00c853 160deg, #00b0ff 220deg, #7c4dff 280deg, #ff4081 330deg, #ff2a2a 360deg)";
+  }
 
   const palette: Record<string, string> = {
     negro: "#050505",
@@ -364,10 +382,35 @@ function groupByCategory(prods: Product[]) {
     return groups;
   }
 
+  const isOfertaPack = (p: Product) => {
+    const text = `${p.categoria || ""} ${p.nombre} ${p.product_id}`.toLowerCase();
+    return ["pack", "combo", "kit", "set", "oferta", "+", "2x1", "3x1"].some((kw) => text.includes(kw));
+  };
+
+  const isCosmetica = (p: Product) => {
+    if (isOfertaPack(p)) return false;
+    const text = `${p.categoria || ""} ${p.nombre} ${p.product_id}`.toLowerCase();
+    return ["cosmetica", "esponja", "moña", "mona", "cosmetiquera", "belleza"].some((kw) => text.includes(kw));
+  };
+
+  const isAccesorio = (p: Product) => {
+    if (isOfertaPack(p)) return false;
+    if (isCosmetica(p)) return false;
+    return p.genero !== "mujeres" && p.genero !== "hombres";
+  };
+
+  const packsProducts = products.filter(isOfertaPack);
+  const cosmeticaProducts = products.filter(isCosmetica);
+  const remainingMujeres = products.filter((p) => p.genero === "mujeres" && !isOfertaPack(p));
+  const remainingHombres = products.filter((p) => p.genero === "hombres" && !isOfertaPack(p));
+  const remainingAccesorios = products.filter(isAccesorio);
+
   const genSections = [
-    { gender: "mujeres", title: "Mujer", products: products.filter((p) => p.genero === "mujeres") },
-    { gender: "hombres", title: "Hombre", products: products.filter((p) => p.genero === "hombres") },
-    { gender: "accesorios", title: "Accesorios", products: products.filter((p) => p.genero !== "mujeres" && p.genero !== "hombres") },
+    { gender: "ofertas", title: "Ofertas & Packs", products: packsProducts },
+    { gender: "cosmetica", title: "Cosmética", products: cosmeticaProducts },
+    { gender: "mujeres", title: "Mujer", products: remainingMujeres },
+    { gender: "hombres", title: "Hombre", products: remainingHombres },
+    { gender: "accesorios", title: "Accesorios", products: remainingAccesorios },
   ].filter((s) => s.products.length > 0);
 
   return (
