@@ -39,22 +39,33 @@ export default function MetricCard({
     }
   }, [value, prefix]);
 
+  const isCurrency = prefix === "$";
+
   return (
     <div
       ref={cardRef}
-      className="metric-card bg-admin-surface rounded-xl border border-admin-border p-6 hover:border-admin-gold/30 transition-colors"
+      className="metric-card bg-admin-surface rounded-xl border border-admin-border p-4 xl:p-4 2xl:p-5 hover:border-admin-gold/30 transition-colors min-w-0 overflow-hidden"
     >
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm text-admin-text-muted mb-1">{label}</p>
-          <p className="text-3xl font-bold text-admin-text">
+      <div className="flex items-start justify-between gap-2 min-w-0">
+        <div className="min-w-0 flex-1">
+          <p className="text-xs sm:text-sm text-admin-text-muted mb-1 truncate" title={label}>
+            {label}
+          </p>
+          <p
+            className={`font-bold text-admin-text tracking-tight truncate ${
+              isCurrency
+                ? "text-lg sm:text-xl xl:text-lg 2xl:text-2xl"
+                : "text-2xl sm:text-3xl"
+            }`}
+            title={prefix + (value || 0).toLocaleString("es-CO")}
+          >
             <span ref={numberRef} className="metric-number">
               {prefix}0
             </span>
           </p>
         </div>
-        <div className={`${color} bg-admin-surface-2 rounded-lg p-3`}>
-          <Icon size={22} />
+        <div className={`${color} bg-admin-surface-2 rounded-lg p-2.5 sm:p-3 shrink-0 ml-1`}>
+          <Icon size={20} className="sm:w-[22px] sm:h-[22px]" />
         </div>
       </div>
     </div>

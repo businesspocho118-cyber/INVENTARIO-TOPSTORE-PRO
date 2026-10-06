@@ -20,17 +20,19 @@ export default function ProductTable() {
     product: Producto | null;
   }>({ open: false, product: null });
   const PAGE_SIZE = 15;
-  const genderTabs = [
+  const sectionTabs = [
     { value: "all", label: "Todos" },
     { value: "mujeres", label: "Mujer" },
     { value: "hombres", label: "Hombre" },
     { value: "accesorios", label: "Accesorios" },
+    { value: "cosmetica", label: "Cosmética" },
+    { value: "ofertas", label: "Ofertas (Packs)" },
   ];
 
   const buildProductParams = () => {
     const params = new URLSearchParams();
     if (search) params.set("search", search);
-    if (generoFilter !== "all") params.set("genero", generoFilter);
+    if (generoFilter !== "all") params.set("seccion", generoFilter);
     if (statusFilter !== "all") params.set("status", statusFilter);
     params.set("page", page.toString());
     params.set("limit", PAGE_SIZE.toString());
@@ -61,7 +63,7 @@ export default function ProductTable() {
       try {
         const params = new URLSearchParams();
         if (search) params.set("search", search);
-        if (generoFilter !== "all") params.set("genero", generoFilter);
+        if (generoFilter !== "all") params.set("seccion", generoFilter);
         if (statusFilter !== "all") params.set("status", statusFilter);
         params.set("page", page.toString());
         params.set("limit", PAGE_SIZE.toString());
@@ -160,7 +162,7 @@ export default function ProductTable() {
           Dividir productos por sección
         </p>
         <div className="flex flex-wrap gap-2">
-          {genderTabs.map((tab) => (
+          {sectionTabs.map((tab) => (
             <button
               key={tab.value}
               type="button"
@@ -170,7 +172,7 @@ export default function ProductTable() {
               }}
               className={`min-h-11 rounded-lg px-4 py-2 text-sm font-bold transition ${
                 generoFilter === tab.value
-                  ? "bg-admin-gold text-admin-bg"
+                  ? "bg-admin-gold text-admin-bg shadow-sm"
                   : "border border-admin-border bg-admin-surface-2 text-admin-text hover:border-admin-gold/70"
               }`}
             >
@@ -200,10 +202,12 @@ export default function ProductTable() {
           }}
           className="admin-field rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-admin-gold"
         >
-          <option value="all">Todos los géneros</option>
+          <option value="all">Todas las secciones</option>
           <option value="hombres">Hombres</option>
           <option value="mujeres">Mujeres</option>
           <option value="accesorios">Accesorios</option>
+          <option value="cosmetica">Cosmética</option>
+          <option value="ofertas">Ofertas (Packs)</option>
         </select>
         <select
           value={statusFilter}

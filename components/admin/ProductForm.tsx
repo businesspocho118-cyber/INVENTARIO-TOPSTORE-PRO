@@ -103,7 +103,12 @@ export default function ProductForm({ product, mode }: ProductFormProps) {
       // Local: /uploads/products/{slug}/{color}/file
       // Cloudflare: .../MUJERES/Chaquetas/file (no color info)
       const parentDir = slugifyColor(segments.length >= 2 ? segments[segments.length - 2] : "");
-      const knownColors = ["negro", "blanco", "azul", "rojo", "verde", "gris", "rosado", "rosa", "morado", "uva", "vinotinto", "burdeos", "amarillo", "naranja", "cafe", "marron", "beige", "dorado", "plateado", "multicolor", "lila", "celeste", "rojovioleta"];
+      const knownColors = [
+        "negro", "blanco", "azul", "rojo", "verde", "gris", "rosado", "rosa",
+        "morado", "uva", "vinotinto", "burdeos", "amarillo", "naranja", "cafe",
+        "marron", "beige", "dorado", "plateado", "multicolor", "lila", "celeste",
+        "rojovioleta", "variado", "variados", "surtidos", "surtido", "arcoiris"
+      ];
       const colorKey = knownColors.includes(parentDir) ? parentDir : "__unassigned";
       if (!grouped[colorKey]) grouped[colorKey] = [];
       if (!grouped[colorKey].includes(url)) grouped[colorKey].push(url);
@@ -388,9 +393,26 @@ export default function ProductForm({ product, mode }: ProductFormProps) {
               </label>
               <input
                 {...register("categoria")}
+                list="categoria-suggestions"
                 className="w-full rounded-lg border border-admin-border bg-admin-surface-2 px-4 py-2.5 text-sm text-admin-text focus:outline-none focus:border-admin-gold"
-                placeholder="camisa, leggins..."
+                placeholder="Cosmetica, Packs, camisa, leggins..."
               />
+              <datalist id="categoria-suggestions">
+                <option value="Cosmetica" />
+                <option value="Packs" />
+                <option value="Ofertas" />
+                <option value="Combos" />
+                <option value="Accesorios" />
+                <option value="Camisas" />
+                <option value="Leggins" />
+                <option value="Shorts" />
+                <option value="Enterizos" />
+                <option value="Buzos" />
+                <option value="Chaquetas" />
+                <option value="Tops" />
+                <option value="Medias" />
+                <option value="Tarros" />
+              </datalist>
             </div>
           </div>
 

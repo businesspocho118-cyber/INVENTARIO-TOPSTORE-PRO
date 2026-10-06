@@ -22,6 +22,52 @@ function sumUnits(unidades: unknown) {
   );
 }
 
+function isOfertaPack(p: {
+  nombre?: string | null;
+  categoria?: string | null;
+  product_id?: string | null;
+}): boolean {
+  const text = `${p.categoria || ""} ${p.nombre || ""} ${p.product_id || ""}`.toLowerCase();
+  return (
+    text.includes("pack") ||
+    text.includes("combo") ||
+    text.includes("kit") ||
+    text.includes("oferta") ||
+    text.includes("set") ||
+    text.includes("+") ||
+    text.includes("2x1") ||
+    text.includes("3x1")
+  );
+}
+
+function isCosmeticaItem(p: {
+  nombre?: string | null;
+  categoria?: string | null;
+  product_id?: string | null;
+}): boolean {
+  if (isOfertaPack(p)) return false;
+  const text = `${p.categoria || ""} ${p.nombre || ""} ${p.product_id || ""}`.toLowerCase();
+  return (
+    text.includes("cosmetica") ||
+    text.includes("esponja") ||
+    text.includes("moña") ||
+    text.includes("mona") ||
+    text.includes("cosmetiquera") ||
+    text.includes("belleza")
+  );
+}
+
+function isAccesorioItem(p: {
+  genero?: string | null;
+  nombre?: string | null;
+  categoria?: string | null;
+  product_id?: string | null;
+}): boolean {
+  if (isOfertaPack(p)) return false;
+  if (isCosmeticaItem(p)) return false;
+  return p.genero === "accesorios";
+}
+
 // GET /api/admin/products — List products or get single product
 export async function GET(req: NextRequest) {
   try {
@@ -51,6 +97,7 @@ export async function GET(req: NextRequest) {
     // List products with filters
     const search = searchParams.get("search") || "";
     const genero = searchParams.get("genero") || "";
+    const seccion = searchParams.get("seccion") || genero || "";
     const status = searchParams.get("status") || "";
     const page = parseInt(searchParams.get("page") || "0");
     const limit = parseInt(searchParams.get("limit") || "15");
@@ -58,15 +105,11 @@ export async function GET(req: NextRequest) {
 
     let query = supabaseAdmin
       .from("productos")
-      .select("*", { count: "exact" })
-      .order("updated_at", { ascending: false })
-      .range(offset, offset + limit - 1);
+      .select("*")
+      .order("updated_at", { ascending: false });
 
     if (search) {
       query = query.ilike("nombre", `%${search}%`);
-    }
-    if (genero) {
-      query = query.eq("genero", genero);
     }
     if (status === "activo") {
       query = query.eq("activo", true);
@@ -76,13 +119,29 @@ export async function GET(req: NextRequest) {
       query = query.eq("stock", 0);
     }
 
-    const { data, error, count } = await query;
+    const { data, error } = await query;
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ products: data || [], total: count || 0 });
+    let filtered = data || [];
+    if (seccion === "ofertas") {
+      filtered = filtered.filter(isOfertaPack);
+    } else if (seccion === "cosmetica") {
+      filtered = filtered.filter(isCosmeticaItem);
+    } else if (seccion === "accesorios") {
+      filtered = filtered.filter(isAccesorioItem);
+    } else if (seccion === "mujeres") {
+      filtered = filtered.filter((p) => p.genero === "mujeres" && !isOfertaPack(p));
+    } else if (seccion === "hombres") {
+      filtered = filtered.filter((p) => p.genero === "hombres" && !isOfertaPack(p));
+    }
+
+    const total = filtered.length;
+    const paginated = filtered.slice(offset, offset + limit);
+
+    return NextResponse.json({ products: paginated, total });
   } catch (err) {
     console.error("Products GET error:", err);
     return NextResponse.json(

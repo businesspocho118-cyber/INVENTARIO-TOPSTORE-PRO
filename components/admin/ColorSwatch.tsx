@@ -1,4 +1,4 @@
-import { getColorHex, slugifyColor } from "@/lib/utils";
+import { getColorHex, isRainbowColor, RAINBOW_GRADIENT } from "@/lib/utils";
 
 interface ColorSwatchProps {
   colorName: string;
@@ -6,15 +6,18 @@ interface ColorSwatchProps {
 }
 
 export function ColorSwatch({ colorName, size = 16 }: ColorSwatchProps) {
+  const isRainbow = isRainbowColor(colorName);
   const hex = getColorHex(colorName);
   const normalizedName = colorName.trim();
   return (
     <span
-      className="inline-block rounded-full border border-black/15"
+      className="inline-block rounded-full border border-black/20 shadow-sm shrink-0"
       style={{
         width: size,
         height: size,
-        backgroundColor: hex,
+        ...(isRainbow
+          ? { background: RAINBOW_GRADIENT }
+          : { backgroundColor: hex }),
       }}
       title={normalizedName}
     />
