@@ -170,12 +170,21 @@ export default function ProductForm({ product, mode }: ProductFormProps) {
   const bajoPedido = useWatch({ control, name: "bajo_pedido" }) ?? false;
 
   const isOferta = useMemo(() => {
+    const id = (productId || product?.product_id || "").toLowerCase();
+    if (
+      id === "pack-5-esponjas-variadas" ||
+      id === "combo-cosmetiquera-2-monas-3-esponjas" ||
+      id === "pack-6-esponjas-2-monas-satin" ||
+      id === "pack-3-monas-satin" ||
+      id === "pack-3-esponjas-variadas" ||
+      id === "mona-satin-cabello"
+    ) {
+      return true;
+    }
+    if (categoria?.toLowerCase() === "ofertas") return true;
     if (bajoPedido) return true;
-    const cat = categoria.toLowerCase();
-    if (cat.includes("oferta") || cat.includes("pack") || cat.includes("combo")) return true;
-    if (product && isProductBajoPedido(product)) return true;
     return false;
-  }, [bajoPedido, categoria, product]);
+  }, [productId, product, categoria, bajoPedido]);
 
   const [stockDisponible, setStockDisponible] = useState<boolean>(() => {
     if (product && Number(product.stock) === 0) return false;

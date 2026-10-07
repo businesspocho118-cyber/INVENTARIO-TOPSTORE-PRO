@@ -175,6 +175,15 @@ export async function revalidateStore(): Promise<boolean> {
   }
 }
 
+const BINARY_STOCK_IDS = new Set([
+  "pack-5-esponjas-variadas",
+  "combo-cosmetiquera-2-monas-3-esponjas",
+  "pack-6-esponjas-2-monas-satin",
+  "pack-3-monas-satin",
+  "pack-3-esponjas-variadas",
+  "mona-satin-cabello",
+]);
+
 export function isProductBajoPedido(product?: {
   bajo_pedido?: boolean | null;
   nombre?: string | null;
@@ -182,19 +191,10 @@ export function isProductBajoPedido(product?: {
   product_id?: string | null;
 } | null): boolean {
   if (!product) return false;
+  const id = product.product_id?.toLowerCase() || "";
+  if (BINARY_STOCK_IDS.has(id)) return true;
+  if (product.categoria?.toLowerCase() === "ofertas") return true;
   if (product.bajo_pedido === true) return true;
-  if (product.bajo_pedido === false) return false;
-
-  const text = `${product.categoria || ""} ${product.nombre || ""} ${product.product_id || ""}`.toLowerCase();
-  return (
-    text.includes("pack") ||
-    text.includes("combo") ||
-    text.includes("kit") ||
-    text.includes("oferta") ||
-    text.includes("set") ||
-    text.includes("+") ||
-    text.includes("2x1") ||
-    text.includes("3x1")
-  );
+  return false;
 }
 
