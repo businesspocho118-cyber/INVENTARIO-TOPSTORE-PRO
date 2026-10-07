@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { getFirstImagePath } from "@/lib/utils";
+import { getFirstImagePath, isProductBajoPedido } from "@/lib/utils";
 import { Shirt, Layers, CupSoda, Search, Sparkles, Tag } from "lucide-react";
 
 export const runtime = "edge";
@@ -220,7 +220,7 @@ async function getActiveProducts() {
 }
 
 function StockCard({ product }: { product: Product }) {
-  const isOferta = isOfertaPack(product);
+  const isOferta = isProductBajoPedido(product);
   const image = getFirstImagePath(product.image_paths);
   const variants = getVariants(product);
   const availableUnits = variants.reduce((sum, item) => sum + item.units, 0);
