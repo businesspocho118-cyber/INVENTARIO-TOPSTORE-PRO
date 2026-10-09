@@ -433,11 +433,11 @@ function groupByCategory(prods: Product[]) {
   const remainingAccesorios = products.filter(isAccesorio);
 
   const genSections = [
-    { gender: "ofertas", title: "Ofertas & Packs", products: packsProducts },
-    { gender: "cosmetica", title: "Cosmética", products: cosmeticaProducts },
     { gender: "mujeres", title: "Mujer", products: remainingMujeres },
     { gender: "hombres", title: "Hombre", products: remainingHombres },
     { gender: "accesorios", title: "Accesorios", products: remainingAccesorios },
+    { gender: "cosmetica", title: "Cosmética", products: cosmeticaProducts },
+    { gender: "ofertas", title: "Ofertas & Packs", products: packsProducts },
   ].filter((s) => s.products.length > 0);
 
   return (
