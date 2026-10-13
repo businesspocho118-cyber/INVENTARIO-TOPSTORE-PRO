@@ -446,10 +446,10 @@ export default function ProductForm({ product, mode }: ProductFormProps) {
                 {...register("categoria")}
                 list="categoria-suggestions"
                 className="w-full rounded-lg border border-admin-border bg-admin-surface-2 px-4 py-2.5 text-sm text-admin-text focus:outline-none focus:border-admin-gold"
-                placeholder="Cosmetica, Packs, camisa, leggins..."
+                placeholder="Bolsos, Packs, camisa, leggins..."
               />
               <datalist id="categoria-suggestions">
-                <option value="Cosmetica" />
+                <option value="Bolsos" />
                 <option value="Packs" />
                 <option value="Ofertas" />
                 <option value="Combos" />

@@ -40,7 +40,7 @@ function isOfertaPack(p: {
   );
 }
 
-function isCosmeticaItem(p: {
+function isBolsosItem(p: {
   nombre?: string | null;
   categoria?: string | null;
   product_id?: string | null;
@@ -48,11 +48,20 @@ function isCosmeticaItem(p: {
   if (isOfertaPack(p)) return false;
   const text = `${p.categoria || ""} ${p.nombre || ""} ${p.product_id || ""}`.toLowerCase();
   return (
+    text.includes("bolso") ||
+    text.includes("cartera") ||
+    text.includes("mochila") ||
+    text.includes("morral") ||
+    text.includes("tote") ||
+    text.includes("canguro") ||
+    text.includes("riñonera") ||
+    text.includes("rinonera") ||
+    text.includes("maletin") ||
+    text.includes("cosmetiquera") ||
     text.includes("cosmetica") ||
     text.includes("esponja") ||
     text.includes("moña") ||
     text.includes("mona") ||
-    text.includes("cosmetiquera") ||
     text.includes("belleza")
   );
 }
@@ -64,7 +73,7 @@ function isAccesorioItem(p: {
   product_id?: string | null;
 }): boolean {
   if (isOfertaPack(p)) return false;
-  if (isCosmeticaItem(p)) return false;
+  if (isBolsosItem(p)) return false;
   return p.genero === "accesorios";
 }
 
@@ -128,8 +137,8 @@ export async function GET(req: NextRequest) {
     let filtered = data || [];
     if (seccion === "ofertas") {
       filtered = filtered.filter(isOfertaPack);
-    } else if (seccion === "cosmetica") {
-      filtered = filtered.filter(isCosmeticaItem);
+    } else if (seccion === "bolsos" || seccion === "cosmetica") {
+      filtered = filtered.filter(isBolsosItem);
     } else if (seccion === "accesorios") {
       filtered = filtered.filter(isAccesorioItem);
     } else if (seccion === "mujeres") {
