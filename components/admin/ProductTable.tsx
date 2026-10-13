@@ -25,7 +25,7 @@ export default function ProductTable() {
     { value: "mujeres", label: "Mujer" },
     { value: "hombres", label: "Hombre" },
     { value: "accesorios", label: "Accesorios" },
-    { value: "cosmetica", label: "Cosmética" },
+    { value: "bolsos", label: "Bolsos" },
     { value: "ofertas", label: "Ofertas (Packs)" },
   ];
 
@@ -206,7 +206,7 @@ export default function ProductTable() {
           <option value="hombres">Hombres</option>
           <option value="mujeres">Mujeres</option>
           <option value="accesorios">Accesorios</option>
-          <option value="cosmetica">Cosmética</option>
+          <option value="bolsos">Bolsos</option>
           <option value="ofertas">Ofertas (Packs)</option>
         </select>
         <select
