@@ -16,24 +16,33 @@ export async function POST(request: NextRequest) {
     }
 
     const adminUsername = process.env.ADMIN_USERNAME;
+    const adminPassword = process.env.ADMIN_PASSWORD;
     const adminPasswordHash = process.env.ADMIN_PASSWORD_HASH;
 
-    if (!adminUsername || !adminPasswordHash) {
-      console.error("ADMIN_USERNAME or ADMIN_PASSWORD_HASH not set in environment");
+    if (!adminUsername || (!adminPassword && !adminPasswordHash)) {
+      console.error(
+        "ADMIN_USERNAME and (ADMIN_PASSWORD or ADMIN_PASSWORD_HASH) must be configured in environment"
+      );
       return NextResponse.json(
-        { error: "Error de configuración del servidor" },
+        { error: "Credenciales de administrador no configuradas en el servidor (.env)" },
         { status: 500 }
       );
     }
 
-    if (username !== adminUsername) {
+    if (username.trim() !== adminUsername.trim()) {
       return NextResponse.json(
         { error: "Credenciales incorrectas" },
         { status: 401 }
       );
     }
 
-    const passwordMatch = await bcrypt.compare(password, adminPasswordHash);
+    let passwordMatch = false;
+
+    if (adminPassword) {
+      passwordMatch = password === adminPassword;
+    } else if (adminPasswordHash) {
+      passwordMatch = await bcrypt.compare(password, adminPasswordHash);
+    }
 
     if (!passwordMatch) {
       return NextResponse.json(
@@ -42,7 +51,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const token = await createSession(username);
+    const token = await createSession(username.trim());
 
     const response = NextResponse.json({ success: true });
     const cookieOptions = getCookieOptions();
@@ -52,7 +61,8 @@ export async function POST(request: NextRequest) {
     });
 
     return response;
-  } catch {
+  } catch (error) {
+    console.error("Error en autenticación:", error);
     return NextResponse.json(
       { error: "Error interno del servidor" },
       { status: 500 }
