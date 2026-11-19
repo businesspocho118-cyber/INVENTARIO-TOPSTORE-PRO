@@ -4,7 +4,10 @@ const COOKIE_NAME = "admin_token";
 const SESSION_DURATION = "8h";
 
 function getJwtSecret() {
-  return new TextEncoder().encode(process.env.ADMIN_JWT_SECRET!);
+  const secret =
+    process.env.ADMIN_JWT_SECRET ||
+    "topstore-admin-jwt-fallback-secret-key-32-chars-long";
+  return new TextEncoder().encode(secret);
 }
 
 export async function createSession(username: string): Promise<string> {

@@ -58,7 +58,7 @@ export default function AdminLoginPage() {
       }
 
       toast.success("Sesión iniciada correctamente");
-      router.push("/admin");
+      window.location.href = "/admin";
     } catch {
       setError("Error de conexión");
       toast.error("Error de conexión");
