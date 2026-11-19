@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { verifySession, getSessionCookieName } from "@/lib/auth";
 
+export const runtime = "edge";
 export const dynamic = "force-dynamic";
 
 export default async function AuthLayout({

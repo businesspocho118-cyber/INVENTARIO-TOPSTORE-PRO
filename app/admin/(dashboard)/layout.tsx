@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import Sidebar from "@/components/admin/Sidebar";
 import { verifySession, getSessionCookieName } from "@/lib/auth";
 
+export const runtime = "edge";
 export const dynamic = "force-dynamic";
 
 export default async function DashboardLayout({
